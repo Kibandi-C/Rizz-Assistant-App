@@ -1,19 +1,31 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+
 import 'providers/chat_provider.dart';
 import 'services/gemini_service.dart';
 import 'screens/home_screen.dart';
 
-void main() {
-  // TODO: Replace with your actual Gemini API Key
-  const String geminiApiKey = 'AIzaSyBdPTVtOAZyeBfdMA4XCsTIOigIzaOPHxU';
-  
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Load environment variables
+  await dotenv.load(fileName: ".env");
+
+  final geminiApiKey = dotenv.env['GEMINI_API_KEY'];
+
+  if (geminiApiKey == null || geminiApiKey.isEmpty) {
+    throw Exception('GEMINI_API_KEY not found in .env file');
+  }
+
   final geminiService = GeminiService(geminiApiKey);
 
   runApp(
     MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => ChatProvider(geminiService)),
+        ChangeNotifierProvider(
+          create: (_) => ChatProvider(geminiService),
+        ),
       ],
       child: const RizzAssistantApp(),
     ),
