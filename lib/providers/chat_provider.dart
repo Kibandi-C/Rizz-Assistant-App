@@ -89,9 +89,9 @@ class ChatProvider extends ChangeNotifier {
     }
   }
 
-  void clearMessages() {
+    void clearMessages() {
     _messages.clear();
     notifyListeners();
+    }
   }
-
 
