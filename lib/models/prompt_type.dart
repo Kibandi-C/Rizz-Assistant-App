@@ -1,0 +1,4 @@
+enum PromptType {
+  chatReply,
+  pickupLine,
+}
