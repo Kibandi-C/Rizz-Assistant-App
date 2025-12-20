@@ -15,6 +15,10 @@ class ChatProvider extends ChangeNotifier {
 
   ChatProvider(this._geminiService);
 
+  DateTime? _lastRequestTime;
+  static const int _cooldownSeconds = 6;
+
+
   // Getters
   List<ChatMessage> get messages => _messages;
   List<String> get generatedResponses => _generatedResponses;
@@ -23,6 +27,13 @@ class ChatProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
 
   // Setters
+  bool get canSendRequest {
+    if (_lastRequestTime == null) return true;
+    return DateTime.now()
+        .difference(_lastRequestTime!)
+        .inSeconds >= _cooldownSeconds;
+  }
+
   void setSelectedTone(Tone tone) {
     _selectedTone = tone;
     notifyListeners();
@@ -46,27 +57,41 @@ class ChatProvider extends ChangeNotifier {
   }
 
   Future<void> generateReplies() async {
-    if (_messages.isEmpty) return;
+    if (_messages.isEmpty || !canSendRequest) return;
 
     _isLoading = true;
     _generatedResponses = [];
     notifyListeners();
-    
+
     try {
+      _lastRequestTime = DateTime.now();
+
       final prompt = PromptBuilder.buildReplyPrompt(
         history: _messages,
         tone: _selectedTone,
         riskLevel: _riskLevel,
       );
-      
-      _generatedResponses = await _geminiService.generateResponses(prompt);
-    } catch (e) {
-      _generatedResponses = ["Error generating replies: $e", "", ""];
+
+      _generatedResponses =
+      await _geminiService.generateResponses(prompt);
+    } on GeminiQuotaException {
+      _generatedResponses = [
+        "AI limit reached. Try again later.",
+        "",
+        ""
+      ];
+    } catch (_) {
+      _generatedResponses = [
+        "AI is temporarily unavailable.",
+        "",
+        ""
+      ];
     } finally {
       _isLoading = false;
       notifyListeners();
     }
   }
+
 
   Future<void> generatePickupLines({String? topic}) async {
     _isLoading = true;
@@ -82,7 +107,7 @@ class ChatProvider extends ChangeNotifier {
       
       _generatedResponses = await _geminiService.generateResponses(prompt);
     } catch (e) {
-      _generatedResponses = ["Error generating pickup lines: $e", "", ""];
+      _generatedResponses = ["Error generating pickup lines:", "The AI is temporarily unavailable", "If this keeps happening then you must have exceeded your limit"];
     } finally {
       _isLoading = false;
       notifyListeners();
