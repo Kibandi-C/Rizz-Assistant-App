@@ -15,7 +15,7 @@ class GeminiService {
     }
 
     int attempts = 0;
-    const int maxRetries = 2;
+    const int maxRetries = 5;
 
     while (true) {
       try {

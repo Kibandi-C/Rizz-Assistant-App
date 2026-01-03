@@ -107,7 +107,7 @@ class ChatProvider extends ChangeNotifier {
       
       _generatedResponses = await _geminiService.generateResponses(prompt);
     } catch (e) {
-      _generatedResponses = ["Error generating pickup lines:", "The AI is temporarily unavailable", "If this keeps happening then you must have exceeded your limit"];
+      _generatedResponses = ["Error generating pickup lines: $e", "", ""];
     } finally {
       _isLoading = false;
       notifyListeners();
